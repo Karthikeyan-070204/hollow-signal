@@ -222,7 +222,7 @@ impl Game {
         // Shots scheduled in the same tick are simultaneous, including trades.
         let s = &self.players[index].view;
         let (dy, dx) = s.angle.sin_cos();
-        let wall_distance = world::raycast(s.x, s.y, dx, dy).distance.min(world::FAR);
+        let wall_distance = world::raycast(s.x, s.y, dx, dy).distance.min(world::FAR); // raycast - imaginary ray into the game world to find a wall. s.x, s.y – Starting position of the ray. dx, dy – Direction in which the ray travels. distance – Gets the distance to the detected wall. min(world::FAR) – Makes sure the distance never exceeds world::FAR
         let mut closest = wall_distance;
         let mut target = None;
         for (i, p) in self.players.iter().enumerate() {
