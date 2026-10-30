@@ -7,8 +7,8 @@ pub const MAX_PLAYERS: usize = 8;
 pub const MAX_PACKET: usize = 4096;
 pub const ROUND_SECONDS: f64 = 300.0;
 pub const TICK_SECONDS: f32 = 1.0 / 30.0;
-pub const COLOR_NAMES: [&str; 8] = [
-    "cyan", "amber", "violet", "red", "lime", "blue", "pink", "white",
+pub const COLOR_NAMES: [&str; 9] = [
+    "cyan", "amber", "violet", "red", "lime", "blue", "pink", "white", "green",
 ];
 pub const COLORS: [(u8, u8, u8); 8] = [
     (69, 219, 207),
