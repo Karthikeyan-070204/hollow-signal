@@ -24,6 +24,7 @@ pub struct Ui<'a> {
     pub net_age: f32,
     pub server: &'a str,
     pub precise: bool,
+    pub minimap: bool,
 }
 
 fn rgb(c: Rgb) -> Color {
@@ -182,7 +183,7 @@ impl Scene {
             let sw = sh * 0.5;
             let top = horizon + projection / z * 0.5 - sh;
             let left = cx - sw * 0.5;
-            let color = COLORS[p.color as usize % 8];
+            let color = COLORS[p.color as usize % 9];
             for x in (left.floor() as i32).max(0)..((left + sw).ceil() as i32).min(width as i32) {
                 if z > depths[x as usize] + 0.01 {
                     continue;
@@ -260,7 +261,7 @@ impl Scene {
                     b'#' => (59, 67, 63),
                     b'+' => (123, 134, 119),
                     b'=' => (33, 40, 38),
-                    b'c' => COLORS[p.color as usize % 8],
+                    b'c' => COLORS[p.color as usize % 9],
                     b'h' => (94, 83, 65),
                     _ => continue,
                 };
@@ -415,15 +416,45 @@ pub fn draw(frame: &mut Frame, snapshot: Option<&Snapshot>, id: u32, ui: &Ui<'_>
         Paragraph::new(format!(
             "  {}  /  {}",
             me.name,
-            COLOR_NAMES[me.color as usize % 8]
+            COLOR_NAMES[me.color as usize % 9]
         ))
-        .style(Style::default().fg(rgb(COLORS[me.color as usize % 8]))),
+        .style(Style::default().fg(rgb(COLORS[me.color as usize % 9]))),
         Rect::new(a.x, a.y + 1, a.width / 2, 1),
     );
     let vw = a.width.min(240);
     let vh = (a.height - 7).min(90);
     let view = Rect::new(a.x + (a.width - vw) / 2, a.y + 3, vw, vh);
     frame.render_widget(Scene::cast(vw as usize, vh as usize * 2, me, s, ui), view);
+    if ui.minimap {
+        let mw = 27u16.min(vw / 2);
+        let mh = 13u16.min(vh / 2);
+        let outer = Rect::new(view.right().saturating_sub(mw + 1), view.y + 1, mw, mh);
+        let block = Block::default()
+            .borders(Borders::ALL)
+            .border_style(Style::default().fg(ACCENT));
+        let inner = block.inner(outer);
+        frame.render_widget(block, outer);
+
+        let dots: Vec<MiniDot> = s
+            .players
+            .iter()
+            .filter(|p| p.id != me.id)
+            .map(|p| MiniDot {
+                x: p.x,
+                y: p.y,
+                color: rgb(COLORS[p.color as usize % 9]),
+                alive: p.hp > 0,
+            })
+            .collect();
+        draw_minimap(
+            frame.buffer_mut(),
+            inner,
+            |x, y| world::tile(x, y) != 0,
+            (me.x, me.y, me.angle),
+            &dots,
+            1.6,
+        );
+    }
     let bottom = a.y + a.height - 3;
     let health_color = if me.hp < 35 {
         Color::Rgb(224, 113, 93)
@@ -522,7 +553,7 @@ pub fn draw(frame: &mut Frame, snapshot: Option<&Snapshot>, id: u32, ui: &Ui<'_>
                     p.deaths,
                     if p.hp == 0 { "lost" } else { "alive" }
                 ),
-                Style::default().fg(rgb(COLORS[p.color as usize % 8])),
+                Style::default().fg(rgb(COLORS[p.color as usize % 9])),
             ));
         }
         lines.push(Line::from(""));
@@ -570,6 +601,91 @@ pub fn draw(frame: &mut Frame, snapshot: Option<&Snapshot>, id: u32, ui: &Ui<'_>
     }
 }
 
+pub struct MiniDot {
+    pub x: f32,
+    pub y: f32,
+    pub color: Color,
+    pub alive: bool,
+}
+
+/// Draws a radar-style minimap into `area`.
+/// `is_wall(tx, ty)` -> true if that map tile is a wall.
+/// `me` = (x, y, angle_radians). `scale` = pixels per map tile.
+pub fn draw_minimap(
+    buf: &mut Buffer,
+    area: Rect,
+    is_wall: impl Fn(i32, i32) -> bool,
+    me: (f32, f32, f32),
+    others: &[MiniDot],
+    px_per_tile: f32,
+) {
+    let (mx, my, ang) = me;
+    let w = area.width as i32;
+    let h = (area.height * 2) as i32; // two pixels per cell
+    let (cx, cy) = (w as f32 / 2.0, h as f32 / 2.0);
+
+    // Camera basis: screen-up = forward, screen-right = right of forward.
+    // (Flip the sign of `right` if your angle convention is mirrored.)
+    let fwd = (ang.cos(), ang.sin());
+    let right = (-ang.sin(), ang.cos());
+
+    let mut px = vec![Color::Rgb(8, 10, 12); (w * h) as usize];
+
+    // 1) Walls + floor: sample the world for every minimap pixel.
+    for y in 0..h {
+        for x in 0..w {
+            let sx = (x as f32 - cx) / px_per_tile;
+            let su = (cy - y as f32) / px_per_tile;
+            let wx = mx + right.0 * sx + fwd.0 * su;
+            let wy = my + right.1 * sx + fwd.1 * su;
+            px[(y * w + x) as usize] = if is_wall(wx.floor() as i32, wy.floor() as i32) {
+                Color::Rgb(70, 78, 74)
+            } else {
+                Color::Rgb(18, 24, 22)
+            };
+        }
+    }
+
+    // 2) Enemies: project into minimap space; clamp to the edge when out of range.
+    let (rx, ry) = (cx - 1.0, cy - 1.0);
+    for d in others.iter().filter(|d| d.alive) {
+        let (dx, dy) = (d.x - mx, d.y - my);
+        let mut sx = (dx * right.0 + dy * right.1) * px_per_tile;
+        let mut su = (dx * fwd.0 + dy * fwd.1) * px_per_tile;
+        // Clamp onto an ellipse edge so off-range enemies show as direction hints.
+        let k = ((sx / rx).powi(2) + (su / ry).powi(2)).sqrt();
+        if k > 1.0 {
+            sx /= k;
+            su /= k;
+        }
+        let (ex, ey) = ((cx + sx) as i32, (cy - su) as i32);
+        for (ox, oy) in [(0, 0), (1, 0), (0, 1), (1, 1)] {
+            let (x, y) = (ex - 1 + ox, ey - 1 + oy);
+            if x >= 0 && y >= 0 && x < w && y < h {
+                px[(y * w + x) as usize] = d.color;
+            }
+        }
+    }
+
+    // 3) You: white dot in the centre with a "nose" pointing up.
+    for (x, y) in [(0, 0), (1, 0), (0, -1), (1, -1)] {
+        let (x, y) = (cx as i32 + x, cy as i32 + y);
+        if x >= 0 && y >= 0 && x < w && y < h {
+            px[(y * w + x) as usize] = Color::White;
+        }
+    }
+
+    // 4) Blit: each cell = '▀' with fg = top pixel, bg = bottom pixel.
+    for cy_cell in 0..area.height {
+        for cx_cell in 0..area.width {
+            let top = px[((cy_cell * 2) as i32 * w + cx_cell as i32) as usize];
+            let bot = px[((cy_cell * 2 + 1) as i32 * w + cx_cell as i32) as usize];
+            let cell = &mut buf[(area.x + cx_cell, area.y + cy_cell)];
+            cell.set_char('▀').set_fg(top).set_bg(bot);
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -596,6 +712,7 @@ mod tests {
                             net_age: 0.0,
                             server: "127.0.0.1:35353",
                             precise: true,
+                            minimap: true,
                         },
                     )
                 })

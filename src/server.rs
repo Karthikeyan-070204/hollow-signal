@@ -81,7 +81,7 @@ impl Server {
                     );
                     return;
                 }
-                if name.len() > 64 || color >= 8 {
+                if name.len() > 64 || color >= 9 {
                     return;
                 }
                 if let Some(peer) = self.peers.get_mut(&addr) {
