@@ -55,7 +55,7 @@ impl Game {
         let view = PlayerView {
             id,
             name: clean_name(name),
-            color: color % 8,
+            color: color % 9,
             x: 0.0,
             y: 0.0,
             angle: 0.0,
@@ -122,7 +122,7 @@ impl Game {
                 };
                 distance(a).total_cmp(&distance(b)).then_with(|| {
                     let shift = self.players[index].view.id as usize + self.round as usize;
-                    ((ia + shift) % 8).cmp(&((ib + shift) % 8))
+                    ((ia + shift) % 9).cmp(&((ib + shift) % 9))
                 })
             })
             .unwrap()
