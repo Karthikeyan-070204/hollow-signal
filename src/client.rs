@@ -40,7 +40,7 @@ impl Connection {
             version: VERSION,
             nonce,
             name: clean_name(name),
-            color: color % 8,
+            color: color % 9,
         })
         .map_err(io::Error::other)?;
         let started = Instant::now();
@@ -120,7 +120,7 @@ impl Connection {
                                 p.x.is_finite()
                                     && p.y.is_finite()
                                     && p.angle.is_finite()
-                                    && p.color < 8
+                                    && p.color < 9
                             });
                         if valid
                             && self

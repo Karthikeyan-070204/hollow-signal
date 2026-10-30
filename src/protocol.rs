@@ -10,7 +10,7 @@ pub const TICK_SECONDS: f32 = 1.0 / 30.0;
 pub const COLOR_NAMES: [&str; 9] = [
     "cyan", "amber", "violet", "red", "lime", "blue", "pink", "white", "green",
 ];
-pub const COLORS: [(u8, u8, u8); 8] = [
+pub const COLORS: [(u8, u8, u8); 9] = [
     (69, 219, 207),
     (230, 171, 68),
     (166, 121, 224),
@@ -19,6 +19,7 @@ pub const COLORS: [(u8, u8, u8); 8] = [
     (97, 153, 236),
     (223, 127, 170),
     (210, 217, 201),
+    (0, 255, 0),
 ];
 #[derive(Debug, Clone, Copy, Default, Serialize, Deserialize)]
 pub struct Intent {

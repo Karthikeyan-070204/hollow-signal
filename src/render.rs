@@ -182,7 +182,7 @@ impl Scene {
             let sw = sh * 0.5;
             let top = horizon + projection / z * 0.5 - sh;
             let left = cx - sw * 0.5;
-            let color = COLORS[p.color as usize % 8];
+            let color = COLORS[p.color as usize % 9];
             for x in (left.floor() as i32).max(0)..((left + sw).ceil() as i32).min(width as i32) {
                 if z > depths[x as usize] + 0.01 {
                     continue;
@@ -260,7 +260,7 @@ impl Scene {
                     b'#' => (59, 67, 63),
                     b'+' => (123, 134, 119),
                     b'=' => (33, 40, 38),
-                    b'c' => COLORS[p.color as usize % 8],
+                    b'c' => COLORS[p.color as usize % 9],
                     b'h' => (94, 83, 65),
                     _ => continue,
                 };
@@ -415,9 +415,9 @@ pub fn draw(frame: &mut Frame, snapshot: Option<&Snapshot>, id: u32, ui: &Ui<'_>
         Paragraph::new(format!(
             "  {}  /  {}",
             me.name,
-            COLOR_NAMES[me.color as usize % 8]
+            COLOR_NAMES[me.color as usize % 9]
         ))
-        .style(Style::default().fg(rgb(COLORS[me.color as usize % 8]))),
+        .style(Style::default().fg(rgb(COLORS[me.color as usize % 9]))),
         Rect::new(a.x, a.y + 1, a.width / 2, 1),
     );
     let vw = a.width.min(240);
@@ -522,7 +522,7 @@ pub fn draw(frame: &mut Frame, snapshot: Option<&Snapshot>, id: u32, ui: &Ui<'_>
                     p.deaths,
                     if p.hp == 0 { "lost" } else { "alive" }
                 ),
-                Style::default().fg(rgb(COLORS[p.color as usize % 8])),
+                Style::default().fg(rgb(COLORS[p.color as usize % 9])),
             ));
         }
         lines.push(Line::from(""));
