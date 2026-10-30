@@ -27,3 +27,19 @@
   **ToSocketAddrs** — Converts hostnames like localhost:8080 into socket addresses.
   
   **AtomicBool** — A thread-safe boolean (true/false), useful for signaling a server to stop.
+
+4. *#[derive(Parser)]
+  #[command(
+    name = "hollow-signal",
+    version,
+    about = "A fog-soaked terminal LAN deathmatch. No command opens the setup menu."
+  )]* - derive is the rust procedural macro feature. Parse comes from the clap crate. It automatically generates code to pass command line arguments. #[command...)] This defines metadata about your CLI application. If the users type hollow signal, it automatically fethes the version number from Cargo.toml and displays it.
+
+5. *struct Args {
+    #[command(subcommand)]
+    command: Option<Command>,
+    #[arg(long, global = true)]
+    calm: bool,
+    #[arg(long,global=true,default_value_t=30,value_parser=clap::value_parser!(u16).range(15..=60))]
+    fps: u16,
+}* - A struct in Rust is used to group related data. Args stores all the command-line arguments supplied by the user. #[command(subcommand)] command: Option<Command>, This defines subcommand like host, join etc. Option is a Rust enum that represents a value that may or may not exist. It has two possibilities Some(value) or None. Why use option? because the user might simply run hollow-signal without specifying subcommand. #[arg(long, global = true)],This configures the argument. long means the option uses a double-dash format. global = true means the option can be used with subcommands as well as at the root command level. "calm: bool" This declares a boolean field.A boolean can be either true or false. If the user supplies --calm, its value becomes true. If the user doesn't supply it, its value defaults to false. This means the option presumably reduces visual or textual atmospheric effects without changing the actual gameplay mechanics.

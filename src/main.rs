@@ -10,12 +10,13 @@ use std::{
     sync::atomic::AtomicBool,
 };
 
-#[derive(Parser)]
-#[command(
+#[derive(Parser)] //gives your struct the ability to parse terminal arguments
+#[command( //tells it what the application is called, its version, and its description.
     name = "hollow-signal",
     version,
     about = "A fog-soaked terminal LAN deathmatch. No command opens the setup menu."
 )]
+// Struct is used to group data, Args stores all the command-line arguments supplied by the user.
 struct Args {
     #[command(subcommand)]
     command: Option<Command>,
