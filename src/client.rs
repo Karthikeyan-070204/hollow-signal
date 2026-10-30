@@ -231,6 +231,7 @@ pub fn play(mut connection: Connection, address: &str, calm: bool, fps: u16) -> 
     let precise = cfg!(windows) || guard.enhanced;
     let mut input = Input::new(precise);
     let started = Instant::now();
+    let minimap = true;
     let mut last_send = started - Duration::from_secs(1);
     let mut last_draw = started - Duration::from_secs(1);
     let frame_time = Duration::from_secs_f32(1.0 / fps.clamp(15, 60) as f32);
@@ -300,6 +301,7 @@ pub fn play(mut connection: Connection, address: &str, calm: bool, fps: u16) -> 
                         net_age: connection.received.elapsed().as_secs_f32(),
                         server: address,
                         precise,
+                        minimap,
                     },
                 )
             })?;
