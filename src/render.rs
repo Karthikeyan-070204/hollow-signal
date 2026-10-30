@@ -93,7 +93,8 @@ impl Scene {
             let dy = sin + cos * PLANE * camera;
             let hit = world::raycast(me.x, me.y, dx, dy);
             *depth = hit.distance;
-            let wall_height = projection / hit.distance;
+            let wall_scale = 2.0;
+            let wall_height = (projection / hit.distance) * wall_scale;
             let top = horizon - wall_height * 0.5;
             let bottom = horizon + wall_height * 0.5;
             for y in 0..height {
